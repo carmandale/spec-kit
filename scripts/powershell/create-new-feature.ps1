@@ -80,6 +80,23 @@ $specsDir = Join-Path $repoRoot 'specs'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
 
 $highest = 0
+
+# Check all git branches for feature numbers first (prevents duplicate numbering across branches)
+if ($hasGit) {
+    try {
+        $branches = git branch --list '[0-9][0-9][0-9]-*' 2>$null | ForEach-Object { $_.Trim() -replace '^\*?\s*', '' }
+        foreach ($branch in $branches) {
+            if ($branch -match '^(\d{3})') {
+                $num = [int]$matches[1]
+                if ($num -gt $highest) { $highest = $num }
+            }
+        }
+    } catch {
+        # Git branch listing failed - will fall back to specs directory
+    }
+}
+
+# Also check local specs/ directory (for --no-git repos or as additional validation)
 if (Test-Path $specsDir) {
     Get-ChildItem -Path $specsDir -Directory | ForEach-Object {
         if ($_.Name -match '^(\d{3})') {
@@ -88,6 +105,7 @@ if (Test-Path $specsDir) {
         }
     }
 }
+
 $next = $highest + 1
 $featureNum = ('{0:000}' -f $next)
 

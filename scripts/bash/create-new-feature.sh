@@ -82,6 +82,18 @@ SPECS_DIR="$REPO_ROOT/specs"
 mkdir -p "$SPECS_DIR"
 
 HIGHEST=0
+
+# Check all git branches for feature numbers first (prevents duplicate numbering across branches)
+if [ "$HAS_GIT" = true ]; then
+    while IFS= read -r branch; do
+        # Extract number from branch name (format: ###-feature-name)
+        number=$(echo "$branch" | grep -o '^[0-9]\+' || echo "0")
+        number=$((10#$number))
+        if [ "$number" -gt "$HIGHEST" ]; then HIGHEST=$number; fi
+    done < <(git branch --list '[0-9][0-9][0-9]-*' | sed 's/^[* ]*//')
+fi
+
+# Also check local specs/ directory (for --no-git repos or as additional validation)
 if [ -d "$SPECS_DIR" ]; then
     for dir in "$SPECS_DIR"/*; do
         [ -d "$dir" ] || continue
