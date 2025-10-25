@@ -161,6 +161,58 @@ The `specify` command supports the following options:
 | `init`      | Initialize a new Specify project from the latest template      |
 | `check`     | Check for installed tools (`git`, `claude`, `gemini`, `code`/`code-insiders`, `cursor-agent`, `windsurf`, `qwen`, `opencode`, `codex`) |
 
+### Updating Existing Projects
+
+After installing spec-kit improvements locally or merging updates, use the `update-project` script to sync infrastructure files (commands, scripts, templates) to your existing projects **without overwriting project-specific customizations**.
+
+#### Bash (Linux/macOS)
+
+```bash
+# Update a project
+./scripts/bash/update-project.sh /path/to/your-project
+
+# Preview changes without modifying files
+./scripts/bash/update-project.sh --dry-run /path/to/your-project
+
+# Update without creating backups
+./scripts/bash/update-project.sh --no-backup /path/to/your-project
+
+# Verbose output
+./scripts/bash/update-project.sh --verbose /path/to/your-project
+```
+
+#### PowerShell (Windows/Cross-platform)
+
+```powershell
+# Update a project
+.\scripts\powershell\update-project.ps1 -ProjectPath C:\path\to\your-project
+
+# Preview changes without modifying files
+.\scripts\powershell\update-project.ps1 -ProjectPath C:\path\to\your-project -DryRun
+
+# Update without creating backups
+.\scripts\powershell\update-project.ps1 -ProjectPath C:\path\to\your-project -NoBackup
+
+# Verbose output
+.\scripts\powershell\update-project.ps1 -ProjectPath C:\path\to\your-project -Verbose
+```
+
+**What Gets Updated:**
+- ✅ `.claude/commands/speckit.*.md` - Slash commands
+- ✅ `.codex/prompts/speckit.*.md` - Codex prompts
+- ✅ `.factory/droids/speckit.*.md` - Factory droids
+- ✅ `.specify/scripts/` - Bash and PowerShell scripts
+- ✅ `.specify/templates/` - Base templates
+- ✅ `templates/commands/` - Command templates
+
+**What Gets Preserved:**
+- ❌ `.specify/memory/constitution.md` - Your project constitution
+- ❌ `specs/` - All feature specifications
+- ❌ Any user-modified templates
+- ❌ Project-specific configuration
+
+**Automatic Backups**: By default, modified files are backed up to `.specify/backups/<timestamp>/` before updating.
+
 ### `specify init` Arguments & Options
 
 | Argument/Option        | Type     | Description                                                                  |

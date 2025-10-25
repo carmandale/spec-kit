@@ -46,3 +46,9 @@ sdd-*/
 
 # Git worktrees (parallel development)
 .worktrees/
+
+# Session coordination files (local only)
+SESSION-*.md
+SUPERVISOR-*.md
+AGENT-STATUS-*.md
+BRANCH-CLEANUP-*.md

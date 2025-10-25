@@ -25,6 +25,46 @@ Options:
   --format FORMAT   Output format: markdown|json|yaml (default: markdown)
 ```
 
+### Output Location Strategy
+
+The command saves summaries to different locations based on context:
+
+**Feature-Specific Work** (on branch `###-feature-name`):
+```
+specs/###-feature-name/session-summary-YYYY-MM-DD.md
+```
+
+**Non-Feature Work** (on main/master or no feature context):
+```
+sessions/YYYY-MM-DD-{type}.md
+```
+
+Where `{type}` is one of:
+- `research` - Exploring codebase, investigating patterns, learning
+- `bug` - Debugging, troubleshooting, fixing issues
+- `exploration` - Experimenting, prototyping, testing ideas
+- `documentation` - Writing docs, updating README, adding comments
+- `general` - Miscellaneous work not fitting other categories
+
+**Directory Management**:
+- `sessions/` directory is auto-created if it doesn't exist
+- `sessions/` is automatically added to `.gitignore` (personal notes, not committed)
+- `specs/` summaries are committed to git (part of feature documentation)
+
+**Example Paths**:
+```
+project-root/
+├── sessions/               # Non-feature summaries (gitignored)
+│   ├── 2025-10-21-research.md
+│   ├── 2025-10-19-bug.md
+│   └── 2025-10-15-exploration.md
+├── specs/                  # Feature-specific (committed to git)
+│   └── 001-user-auth/
+│       └── session-summary-2025-10-21.md
+└── memory/                 # Permanent artifacts (committed)
+    └── constitution.md
+```
+
 ### Execution Flow
 
 1. **Parse Arguments**:
@@ -32,11 +72,26 @@ Options:
    - If `--type` not specified, auto-detect from context (current branch, recent commands)
    - If `--output` not specified, determine save location:
      - If on feature branch (###-feature-name), save to `specs/###-feature-name/session-summary-YYYY-MM-DD.md`
-     - If on main/master, save to root directory as `SESSION-YYYY-MM-DD-LEARNINGS.md`
+     - If on main/master or no feature context:
+       - Auto-detect session type (research, bug, exploration, documentation, general)
+       - Save to `sessions/YYYY-MM-DD-{type}.md`
+       - Create `sessions/` directory if it doesn't exist
+       - Add `sessions/` to `.gitignore` if not already present
      - For planning phase, suggest `specs/###-feature-name/planning-decisions.md`
      - For implementation phase, suggest `specs/###-feature-name/implementation-notes.md`
 
-2. **Gather Session Context**:
+2. **Prepare Output Directory** (if using `sessions/` directory):
+   - Check if `sessions/` directory exists at repository root
+   - If not, create it: `mkdir -p sessions/`
+   - Check if `.gitignore` contains `sessions/`
+   - If not, append `sessions/` to `.gitignore` with comment:
+     ```
+     # Session summaries (personal notes, not committed)
+     sessions/
+     ```
+   - Display notice: "📁 Created sessions/ directory (added to .gitignore)"
+
+3. **Gather Session Context**:
    - Current date and time
    - Feature branch name (if applicable)
    - AI agent being used (Claude, Codex, Factory Droid, etc.)
@@ -44,7 +99,7 @@ Options:
    - Session duration estimate (if possible)
    - Current workflow phase (specify, plan, tasks, implement, general)
 
-3. **Analyze Conversation History** (Review all messages in current session):
+4. **Analyze Conversation History** (Review all messages in current session):
 
    **Key Discoveries Section**:
    - Identify important revelations, insights, or findings
@@ -80,7 +135,7 @@ Options:
    - Note dependencies or blockers
    - Reference related features or issues
 
-4. **Check for Sensitive Information**:
+5. **Check for Sensitive Information**:
    - Scan generated content for patterns:
      - API keys: `api[_-]?key.*[=:]\s*[A-Za-z0-9]{20,}`
      - Tokens: `token.*[=:]\s*[A-Za-z0-9]{20,}`
@@ -91,7 +146,7 @@ Options:
      - List pattern types found (not actual values)
      - Recommend review before committing
 
-5. **Generate Output** (Using appropriate format):
+6. **Generate Output** (Using appropriate format):
 
    **Markdown Format** (default):
    ```markdown
@@ -214,7 +269,7 @@ Options:
    **YAML Format** (if --format yaml):
    Similar structure to JSON but in YAML syntax
 
-6. **Write Output File**:
+7. **Write Output File**:
    - Check if output file already exists at target path
    - If exists, prompt user:
      ```
@@ -230,7 +285,7 @@ Options:
    - Write file to chosen location
    - Set appropriate file permissions
 
-7. **Report Completion**:
+8. **Report Completion**:
    ```
    ✅ Session summary generated!
 
@@ -296,6 +351,7 @@ Monitor token usage throughout the session:
 
   [Extract any TODOs mentioned]
   ```
+  Save to `sessions/YYYY-MM-DD-general.md` if no feature context.
 
 - **Multiple features in single session**: If user worked on multiple feature branches, prompt:
   ```
@@ -304,10 +360,10 @@ Monitor token usage throughout the session:
   - 003-startup-loading
 
   Select target(s) for summary:
-    1) 002-agent-installer only
-    2) 003-startup-loading only
-    3) Both (generate separate summaries)
-    4) General (root directory, cross-feature)
+    1) 002-agent-installer only (saves to specs/002-agent-installer/)
+    2) 003-startup-loading only (saves to specs/003-startup-loading/)
+    3) Both (generate separate summaries in respective specs/ dirs)
+    4) General (saves to sessions/, cross-feature work)
 
   Your choice (1-4):
   ```
@@ -355,10 +411,10 @@ Output saved to `specs/002-agent-installer/session-summary-2025-10-19.md` contai
 
 Input:
 ```
-/speckit.session-summary --type bug --output worktree-bug-fix.md
+/speckit.session-summary --type bug
 ```
 
-Output saved to `worktree-bug-fix.md` containing problem analysis, root cause, solution applied, testing verification, and affected files.
+Output saved to `sessions/2025-10-19-bug.md` containing problem analysis, root cause, solution applied, testing verification, and affected files. If this was for a specific GitHub issue, could use `--output sessions/2025-10-19-bug-123.md`.
 
 **Example 3: Cross-Project Research**
 
@@ -367,4 +423,4 @@ Input:
 /speckit.session-summary --type research
 ```
 
-Output saved to `SESSION-2025-10-19-LEARNINGS.md` containing insights discovered while testing features across spec-kit and PfizerOutdoCancerV2 projects, including cross-project patterns and integration points.
+Output saved to `sessions/2025-10-19-research.md` containing insights discovered while testing features across spec-kit and PfizerOutdoCancerV2 projects, including cross-project patterns and integration points.
